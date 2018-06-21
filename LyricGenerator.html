@@ -1,0 +1,81 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>RiTa Examples</title>
+    <style>
+        #input{
+            height: 500px;
+            width: 600px;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="./rita-full.js"></script>
+    <script src="./markovword.js"></script>
+    <script>
+        // Keep track of all words by pos
+        let wordbypos = {};
+        // Keep track of all words
+        let poslist = [];
+        // Create a generator with parameters
+        const markov = new MarkovGeneratorWord(1, 12);
+        const rita = RiTa;
+        function generateLyrics(){
+            document.getElementById("results").innerHTML = "";
+            // Split it up into line breaks
+            const lines = document.getElementById("input").value.split("\n");
+            // Feed in the lines
+            for (const line of lines) {
+                // Trim out any extra white space
+                var txt = line.trim();
+
+                var pos = rita.getPosTags(txt);
+                var words = rita.tokenize(txt);
+                markov.feed(pos);
+
+                for (var i = 0; i < pos.length; i++) {
+                var tag = pos[i];
+                var word = words[i];
+                if (!wordbypos[tag]) {
+                    wordbypos[tag] = [];
+                    poslist.push(tag);
+                }
+                wordbypos[tag].push(word);
+                }
+
+            }
+
+            var loopNum = parseInt(document.getElementById("lyric_num").value, 10);
+            var generatedText = '';
+            for(var loopIndex = 0; loopIndex < loopNum; loopIndex++){
+                // Show the resulting output
+                var generatedPos = markov.generate();
+                var posarray = generatedPos.split(/\s+/);
+
+                for (var i = 0; i < posarray.length; i++) {
+                    var tag = posarray[i];
+                    var options = wordbypos[tag];
+                    generatedText += options.choice() + ' ';
+                }
+                generatedText += "<br />"
+            }
+            document.getElementById("results").innerHTML = generatedText;
+        }
+    </script>
+    <div id="content" width=200 height=200></div>
+    <div class="container">
+        <textarea id="input">
+
+        </textarea>
+        <input id="lyric_num" value="15"/>
+        <button id="generate" onClick="generateLyrics()">Generate</button>
+        <div id="results">
+
+        </div>
+    </div>
+</body>
+</html>
